@@ -206,11 +206,20 @@ class model:
         std = data.std(axis=0)
         return (data-mean)/std
 #hebb算法的实现
+    def hebb(self, x, *, alpha):
+        self.for_bp_train = False
+        self.for_perceptron = False
+        self.w = np.zeros((x.shape[0], x.shape[0]))
+        for i in range(x.shape[1]):
+            d = x[:, i].reshape(4, 1)
+            self.w = self.w + alpha*np.dot(d, d.T)
+    def hardlim(self, x):
+        return np.where(x >= 0, 1, -1)
 
 
 
 #用于测试集的测试
-    def eval(self, x, y):
+    def eval(self, x=None, y=None):
         if self.for_perceptron == True:
             #感知机的预测
             x = self.normalization(x)
@@ -229,7 +238,10 @@ class model:
             precession = self.validate(a[self.layer_size - 1], y)
             print("测试集损失:{},测试集准确率{}".format(j/x.shape[1], precession))
         elif self.for_hebb == True:
-            pass
+            # print(self.w)
+            pred_pattern = np.dot(self.w, x)
+            pred_pattern = self.hardlim(pred_pattern)
+            print("最后结果为:{}".format(pred_pattern))
 
 #####################################################################  测试
 #bp_trian
@@ -244,9 +256,24 @@ train_label = processed_data.train_label
 test_data = processed_data.test_data
 test_label = processed_data.test_label
 #定义网络测试
-net = model([784, 256, 64, 10], ['sigmoid', 'sigmoid', 'sigmoid'], weight_define='Gauss')
-net.bp_train(train_data, train_label, alpha=0.05, num_epoch=100, show_ratio=0.1, batch_size=128, validate_ratio=0)
-net.eval(test_data, test_label)
+# net = model([784, 256, 64, 10], ['sigmoid', 'sigmoid', 'sigmoid'], weight_define='Gauss')
+# net.bp_train(train_data, train_label, alpha=0.05, num_epoch=100, show_ratio=0.1, batch_size=128, validate_ratio=0)
+# net.eval(test_data, test_label)
+
+#hebb
+#准备数据
+x1 = np.array([[1], [-1], [1], [1]])
+x2 = np.array([[-1], [1], [1], [-1]])
+y1 = np.array([[1], [-1], [0], [0]])
+y2 = np.array([[-1], [1], [0], [0]])
+hebb_x = np.zeros((4, 2))
+hebb_x[:, 0] = x1[:, 0]
+hebb_x[:, 1] = x2[:, 0]
+#定义网络测试
+net2 = model()
+net2.hebb(hebb_x, alpha=0.1)
+net2.eval(y1)
+net2.eval(y2)
 
 #perceptron
 #准备数据
